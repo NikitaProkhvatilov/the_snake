@@ -43,15 +43,72 @@ clock = pygame.time.Clock()
 
 
 # Тут опишите все классы игры.
-...
+class GameObject:
+    def __init__(self):
+        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+        self.body_color = None
 
+    def draw(self):
+        pass
+
+class Apple(GameObject):
+    def __init__(self):
+        #self.position = (0,0)    
+        self.body_color = APPLE_COLOR
+
+    def randomize_position(self):
+        #self.position = randint(0, 480)
+        pass    
+
+    def draw(self):
+        rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(screen, self.body_color, rect)
+        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+
+class Snake(GameObject):
+    def __init__(self):
+        self.lenth = 1
+        self.position = []
+        self.direction = RIGHT
+        self.next_direction = None
+        self.body_color = SNAKE_COLOR
+
+    def update_direction(self):
+        if self.next_direction:
+            self.direction = self.next_direction
+            self.next_direction = None 
+
+    def move(self):
+        pass
+
+    def draw(self):
+        for position in self.positions[:-1]:
+            rect = (pygame.Rect(position, (GRID_SIZE, GRID_SIZE)))
+            pygame.draw.rect(screen, self.body_color, rect)
+            pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+     # Отрисовка головы змейки
+        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(screen, self.body_color, head_rect)
+        pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
+     # Затирание последнего сегмента
+        if self.last:
+            last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
+            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+
+    def get_head_position(self):
+        pass
+
+    def reset(self):
+        pass        
+    
 
 def main():
     # Тут нужно создать экземпляры классов.
-    ...
+    apple = Apple()
 
-    # while True:
-    #     clock.tick(SPEED)
+    while True:
+         clock.tick(SPEED)
+         pygame.display.update()
 
         # Тут опишите основную логику игры.
         # ...
@@ -62,7 +119,7 @@ if __name__ == '__main__':
 
 
 # Метод draw класса Apple
-# def draw(self):
+#  def draw(self):
 #     rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
 #     pygame.draw.rect(screen, self.body_color, rect)
 #     pygame.draw.rect(screen, BORDER_COLOR, rect, 1)

@@ -59,7 +59,7 @@ class Apple(GameObject):
         return position
 
     def __init__(self):
-        self.position = self.randomize_position()   
+        self.position = self.randomize_position()
         self.body_color = APPLE_COLOR
 
     def draw(self):
@@ -69,11 +69,13 @@ class Apple(GameObject):
 
 class Snake(GameObject):
     def __init__(self):
-        self.lenth = 1
-        self.position = []
+        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+        self.length = 1
+        self.positions = [self.position]
         self.direction = RIGHT
         self.next_direction = None
         self.body_color = SNAKE_COLOR
+        self.last = self.positions[-1]
 
     def update_direction(self):
         if self.next_direction:
@@ -81,7 +83,17 @@ class Snake(GameObject):
             self.next_direction = None 
 
     def move(self):
-        pass
+        actual_pos = self.get_head_position()
+        if self.direction == RIGHT:
+            new_head = (actual_pos[0] - 10, actual_pos[1])
+            self.positions.insert(0, new_head)
+            self.positions.pop(-1)
+            if actual_pos[0] == 0:
+                new_head = (SCREEN_WIDTH, actual_pos[1])
+                self.positions.insert(0, new_head)
+            elif actual_pos[1] == 0:
+                new_head = (actual_pos[0], SCREEN_HEIGHT)
+                self.positions.insert(0, new_head)
 
     def draw(self):
         for position in self.positions[:-1]:
@@ -92,26 +104,43 @@ class Snake(GameObject):
         head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, head_rect)
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
-     # Затирание последнего сегмента
+     #  Затирание последнего сегмента
         if self.last:
             last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
     def get_head_position(self):
-        pass
+        return self.positions[0]
 
     def reset(self):
         pass        
-    
+def handle_keys(game_object):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            raise SystemExit
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP and game_object.direction != DOWN:
+                game_object.next_direction = UP
+            elif event.key == pygame.K_DOWN and game_object.direction != UP:
+                game_object.next_direction = DOWN
+            elif event.key == pygame.K_LEFT and game_object.direction != RIGHT:
+                game_object.next_direction = LEFT
+            elif event.key == pygame.K_RIGHT and game_object.direction != LEFT:
+                game_object.next_direction = RIGHT    
 
 def main():
     # Тут нужно создать экземпляры классов.
+    running = True
     apple = Apple()
-
-    while True:
-         clock.tick(SPEED)
-         apple.draw()
-         pygame.display.update()
+    apple.draw()
+    snake = Snake()
+    while running:
+        clock.tick(SPEED)
+        snake.draw()
+        snake.move()
+        pygame.display.update()
+        
 
         # Тут опишите основную логику игры.
         # ...

@@ -52,13 +52,15 @@ class GameObject:
         pass
 
 class Apple(GameObject):
-    def __init__(self):
-        #self.position = (0,0)    
-        self.body_color = APPLE_COLOR
-
     def randomize_position(self):
-        #self.position = randint(0, 480)
-        pass    
+        x = randint(0, GRID_HEIGHT) * GRID_SIZE
+        y = randint(0, GRID_WIDTH) * GRID_SIZE
+        position = (x, y)
+        return position
+
+    def __init__(self):
+        self.position = self.randomize_position()   
+        self.body_color = APPLE_COLOR
 
     def draw(self):
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
@@ -108,6 +110,7 @@ def main():
 
     while True:
          clock.tick(SPEED)
+         apple.draw()
          pygame.display.update()
 
         # Тут опишите основную логику игры.

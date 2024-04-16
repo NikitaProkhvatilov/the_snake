@@ -86,37 +86,30 @@ class Snake(GameObject):
     def move(self):
         """Движение змейки"""
         head_pos = self.get_head_position()
-        if self.direction == RIGHT:
-            new_head = (head_pos[0] + GRID_SIZE, head_pos[1])
+        new_head = (
+            head_pos[0] + self.direction[0] * GRID_SIZE,
+            head_pos[1] + self.direction[1] * GRID_SIZE)
+        # столкновение c правым краем
+        if head_pos[0] == SCREEN_WIDTH:
+            new_head = (GRID_SIZE, head_pos[1])
             self.positions.insert(0, new_head)
-            # столкновение c правым краем
-            if head_pos[0] == SCREEN_WIDTH:
-                new_head = (GRID_SIZE, head_pos[1])
-                self.positions.insert(0, new_head)
             
-        if self.direction == LEFT:
-            new_head = (head_pos[0] - GRID_SIZE, head_pos[1])
+        # столкновение c левым краем
+        if head_pos[0] == 0:
+            new_head = (SCREEN_WIDTH, head_pos[1])
             self.positions.insert(0, new_head)
-            # столкновение c левым краем
-            if head_pos[0] == 0:
-                new_head = (SCREEN_WIDTH, head_pos[1])
-                self.positions.insert(0, new_head)
 
-        if self.direction == UP:
-            new_head = (head_pos[0], head_pos[1] - GRID_SIZE)
-            self.positions.insert(0, new_head)
             # столкновение c верхним краем
-            if head_pos[1] == 0:
-                new_head = (head_pos[0], SCREEN_HEIGHT)
-                self.positions.insert(0, new_head)
-            
-        if self.direction == DOWN:
-            new_head = (head_pos[0], head_pos[1] + GRID_SIZE)
+        if head_pos[1] == 0:
+            new_head = (head_pos[0], SCREEN_HEIGHT)
             self.positions.insert(0, new_head)
-            # столкновение c нижним краем
-            if head_pos[1] == SCREEN_HEIGHT:
-                new_head = (head_pos[0], GRID_SIZE)
-                self.positions.insert(0, new_head)
+            
+        # столкновение c нижним краем
+        if head_pos[1] == SCREEN_HEIGHT:
+            new_head = (head_pos[0], GRID_SIZE)
+            self.positions.insert(0, new_head)
+        self.positions.insert(0, new_head)
+
         if len(self.positions) > self.length:
             self.last = self.positions.pop()           
 

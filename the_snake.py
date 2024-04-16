@@ -52,14 +52,17 @@ class GameObject:
         pass
 
 class Apple(GameObject):
-    def randomize_position(self):
-        return (
-            (randint(0, GRID_HEIGHT) * GRID_SIZE),
-            (randint(0, GRID_WIDTH) * GRID_SIZE))
 
     def __init__(self):
-        self.position = self.randomize_position()
+        self.position = (
+            (randint(0, GRID_HEIGHT) * GRID_SIZE),
+            (randint(0, GRID_WIDTH) * GRID_SIZE))    
         self.body_color = APPLE_COLOR
+
+    def randomize_position(self):
+        self.position = (
+            (randint(0, GRID_HEIGHT) * GRID_SIZE),
+            (randint(0, GRID_WIDTH) * GRID_SIZE))    
 
     def draw(self):
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
@@ -86,51 +89,36 @@ class Snake(GameObject):
         if self.direction == RIGHT:
             new_head = (head_pos[0] + GRID_SIZE, head_pos[1])
             self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        elif self.direction == LEFT:
+            # столкновение c правым краем
+            if head_pos[0] == SCREEN_WIDTH:
+                new_head = (GRID_SIZE, head_pos[1])
+                self.positions.insert(0, new_head)
+            
+        if self.direction == LEFT:
             new_head = (head_pos[0] - GRID_SIZE, head_pos[1])
             self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        elif self.direction == UP:
+            # столкновение c левым краем
+            if head_pos[0] == 0:
+                new_head = (SCREEN_WIDTH, head_pos[1])
+                self.positions.insert(0, new_head)
+
+        if self.direction == UP:
             new_head = (head_pos[0], head_pos[1] - GRID_SIZE)
             self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        elif self.direction == DOWN:
+            # столкновение c верхним краем
+            if head_pos[1] == 0:
+                new_head = (head_pos[0], SCREEN_HEIGHT)
+                self.positions.insert(0, new_head)
+            
+        if self.direction == DOWN:
             new_head = (head_pos[0], head_pos[1] + GRID_SIZE)
             self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-
-        """Столкновение змейки с краем экрана"""
-        # столкновение c левым краем
-        if head_pos[0] == 0:
-            new_head = (SCREEN_WIDTH - GRID_SIZE, head_pos[1])
-            self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        # столкновение c правым краем
-        elif head_pos[0] == SCREEN_WIDTH:
-            new_head = (GRID_SIZE, head_pos[1])
-            self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        # столкновение c верхним краем
-        elif head_pos[1] == 0:
-            new_head = (head_pos[0], SCREEN_HEIGHT - GRID_SIZE)
-            self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        # столкновение c нижним краем
-        elif head_pos[1] == SCREEN_HEIGHT:
-            new_head = (head_pos[0], GRID_SIZE)
-            self.positions.insert(0, new_head)
-            if len(self.positions) > self.length:
-                self.last = self.positions.pop()
-        
-            
+            # столкновение c нижним краем
+            if head_pos[1] == SCREEN_HEIGHT:
+                new_head = (head_pos[0], GRID_SIZE)
+                self.positions.insert(0, new_head)
+        if len(self.positions) > self.length:
+            self.last = self.positions.pop()           
 
     def draw(self):
         for position in self.positions[:-1]:
@@ -184,10 +172,15 @@ def main():
         handle_keys(snake)
         snake.draw()
         snake.move()
+        if snake.positions[0] == apple.position:
+            snake.length += 1
+            apple.randomize_position()
+            apple.draw()
+
         pygame.display.update()
 
         # Тут опишите основную логику игры.
-        # ...
+        
 
 
 if __name__ == '__main__':

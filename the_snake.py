@@ -193,6 +193,7 @@ def main():
         handle_keys(snake)
         snake.draw()
         snake.move()
+        # Столкновение змейки и яблока
         if snake.positions[0] == apple.position:
             snake.length += 1
             apple.randomize_position()

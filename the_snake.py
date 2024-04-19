@@ -61,6 +61,11 @@ class GameObject:
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
+    def erase(self, last):
+        """Затирание последней клетки"""
+        last_rect = pygame.Rect(last, (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+
 
 class Apple(GameObject):
     """Яблоко"""
@@ -86,6 +91,7 @@ class Snake(GameObject):
         super().__init__(body_color=SNAKE_COLOR)
         self.length = 1
         self.positions = [self.position]
+        self.directions = [UP, DOWN, RIGHT, LEFT]
         self.direction = RIGHT
         self.last = None
 
@@ -117,26 +123,21 @@ class Snake(GameObject):
         # удаление последнего сегмента
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
+        else:
+            self.last = None
         # проверка на столкновение с собой
         if len(self.positions) > len(set(self.positions)):
             self.reset()
 
     def draw(self):
         """Отрисовка змейки"""
-        for position in self.positions[:-1]:
-            rect = (pygame.Rect(position, (GRID_SIZE, GRID_SIZE)))
-            pygame.draw.rect(screen, self.body_color, rect)
-            pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
-
-    # Отрисовка головы змейки
-        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
+        head_rect = pygame.Rect(self.get_head_position(),
+                                (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, head_rect)
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
-
-    #  Затирание последнего сегмента
-        if self.last:
-            last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
-            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+        # затирание последнего сегмента
+        if self.last is not None:
+            self.erase(self.last)
 
     def get_head_position(self):
         """Получение позиции головы"""
@@ -144,14 +145,9 @@ class Snake(GameObject):
 
     def reset(self):
         """Обнуление позиции змейки и её длины"""
-        for pos in self.positions:
-            if self.last:
-                last_rect = pygame.Rect(pos, (GRID_SIZE, GRID_SIZE))
-                pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
-        directions = [UP, DOWN, RIGHT, LEFT]
-        self.direction = choice(directions)
+        self.direction = choice(self.directions)
         self.length = 1
-        self.positions = [self.position]
+        self.positions.insert(0, self.position)
 
 
 def handle_keys(game_object):
@@ -174,20 +170,19 @@ def handle_keys(game_object):
 def main():
     """Игра"""
     # экземпляры классов.
-    running = True
     snake = Snake()
     apple = Apple()
     apple.randomize_position()
     print(apple.position)
     apple.draw()
     # цикл игры
-    while running:
+    while True:
         clock.tick(SPEED)
         handle_keys(snake)
         snake.draw()
         snake.move()
         # Столкновение змейки и яблока
-        if snake.positions[0] == apple.position:
+        if snake.get_head_position() == apple.position:
             snake.length += 1
             apple.randomize_position()
             apple.draw()

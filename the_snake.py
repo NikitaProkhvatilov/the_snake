@@ -1,5 +1,7 @@
 from random import choice, randint
 
+import abc
+
 import pygame
 
 # Инициализация PyGame:
@@ -46,58 +48,50 @@ clock = pygame.time.Clock()
 class GameObject:
     """Базовый класс"""
 
-    def __init__(self):
-        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
-        self.body_color = None
+    def __init__(
+            self, position=((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2)),
+            body_color=BOARD_BACKGROUND_COLOR):
+        self.position = position
+        self.body_color = body_color
 
+    @abc.abstractmethod
     def draw(self):
         """Отрисовка объекта"""
-        pass
+        rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(screen, self.body_color, rect)
+        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
 class Apple(GameObject):
     """Яблоко"""
 
     def __init__(self):
-        self.position = (
-            (randint(0, GRID_WIDTH - 1) * GRID_SIZE),
-            (randint(0, GRID_HEIGHT - 1) * GRID_SIZE))
-        self.body_color = APPLE_COLOR
+        super().__init__(body_color=APPLE_COLOR)
 
     def randomize_position(self):
         """Генерация случайной позиции"""
         self.position = (
-            (randint(0, GRID_WIDTH) * GRID_SIZE),
-            (randint(0, GRID_HEIGHT) * GRID_SIZE))
-        # если позиция яблока за пределами видимого поля
-        if self.position[0] == 640 or self.position[1] == 480:
-            self.position = (
-                (randint(0, GRID_WIDTH) * GRID_SIZE),
-                (randint(0, GRID_HEIGHT) * GRID_SIZE))
+            (randint(0, GRID_WIDTH - 1) * GRID_SIZE),
+            (randint(0, GRID_HEIGHT - 1) * GRID_SIZE))
 
     def draw(self):
         """Отрисовка яблока"""
-        rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, self.body_color, rect)
-        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+        super().draw()
 
 
 class Snake(GameObject):
     """Змейка"""
 
     def __init__(self):
-        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+        super().__init__(body_color=SNAKE_COLOR)
         self.length = 1
         self.positions = [self.position]
         self.direction = RIGHT
-        self.next_direction = self.direction
-        self.body_color = SNAKE_COLOR
         self.last = None
 
-    def update_direction(self):
+    def update_direction(self, direction):
         """Обновление направления движения"""
-        if self.next_direction != self.direction:
-            self.direction = self.next_direction
+        self.direction = direction
 
     def move(self):
         """Движение змейки"""
@@ -184,9 +178,11 @@ def main():
     """Игра"""
     # экземпляры классов.
     running = True
-    apple = Apple()
-    apple.draw()
     snake = Snake()
+    apple = Apple()
+    apple.randomize_position()
+    print(apple.position)
+    apple.draw()
     # цикл игры
     while running:
         clock.tick(SPEED)
@@ -197,10 +193,8 @@ def main():
         if snake.positions[0] == apple.position:
             snake.length += 1
             apple.randomize_position()
-            for position in snake.positions[1:]:
-                if position == apple.position:
-                    apple.randomize_position()
             apple.draw()
+            print(apple.position)
         pygame.display.update()
 
 

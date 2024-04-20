@@ -55,9 +55,9 @@ class GameObject:
         self.body_color = body_color
 
     @abc.abstractmethod
-    def draw(self):
+    def draw(self, pos):
         """Отрисовка объекта"""
-        rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
+        rect = pygame.Rect(pos, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
@@ -73,15 +73,17 @@ class Apple(GameObject):
     def __init__(self):
         super().__init__(body_color=APPLE_COLOR)
 
-    def randomize_position(self):
+    def randomize_position(self, object):
         """Генерация случайной позиции"""
-        self.position = (
-            (randint(0, GRID_WIDTH - 1) * GRID_SIZE),
-            (randint(0, GRID_HEIGHT - 1) * GRID_SIZE))
+        for cell in object.positions:
+            if self.position == cell:
+                self.position = (
+                    (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
+                    (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
 
     def draw(self):
         """Отрисовка яблока"""
-        super().draw()
+        super().draw(self.position)
 
 
 class Snake(GameObject):
@@ -125,17 +127,10 @@ class Snake(GameObject):
             self.last = self.positions.pop()
         else:
             self.last = None
-        # проверка на столкновение с собой
-        if len(self.positions) > len(set(self.positions)):
-            self.reset()
 
     def draw(self):
         """Отрисовка змейки"""
-        head_rect = pygame.Rect(self.get_head_position(),
-                                (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, self.body_color, head_rect)
-        pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
-        # затирание последнего сегмента
+        super().draw(self.get_head_position())
         if self.last is not None:
             self.erase(self.last)
 
@@ -145,9 +140,11 @@ class Snake(GameObject):
 
     def reset(self):
         """Обнуление позиции змейки и её длины"""
+        for pos in self.positions:
+            self.erase(pos)
         self.direction = choice(self.directions)
         self.length = 1
-        self.positions.insert(0, self.position)
+        self.positions = [self.position]
 
 
 def handle_keys(game_object):
@@ -172,8 +169,7 @@ def main():
     # экземпляры классов.
     snake = Snake()
     apple = Apple()
-    apple.randomize_position()
-    print(apple.position)
+    apple.randomize_position(snake)
     apple.draw()
     # цикл игры
     while True:
@@ -184,9 +180,15 @@ def main():
         # Столкновение змейки и яблока
         if snake.get_head_position() == apple.position:
             snake.length += 1
-            apple.randomize_position()
+            apple.randomize_position(snake)
             apple.draw()
-            print(apple.position)
+        # Столкновение змейки с собой
+        for pos in snake.positions[1:]:
+            if pos == snake.get_head_position():
+                snake.reset()
+        # Если змейка заняла весь экран
+        if snake.length == ((GRID_WIDTH - 1) * (GRID_HEIGHT - 1)):
+            snake.reset()
         pygame.display.update()
 
 

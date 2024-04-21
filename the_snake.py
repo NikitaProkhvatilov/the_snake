@@ -1,7 +1,5 @@
 from random import choice, randint
 
-import abc
-
 import pygame
 
 # Инициализация PyGame:
@@ -54,16 +52,19 @@ class GameObject:
         self.position = position
         self.body_color = body_color
 
-    @abc.abstractmethod
-    def draw(self, pos):
+    def draw(self):
         """Отрисовка объекта"""
-        rect = pygame.Rect(pos, (GRID_SIZE, GRID_SIZE))
+        pass
+
+    def cell(self, coordinates):
+        """Отрисовывание клетки"""
+        rect = pygame.Rect(coordinates, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
-    def erase(self, last):
+    def erase(self, coordinates):
         """Затирание последней клетки"""
-        last_rect = pygame.Rect(last, (GRID_SIZE, GRID_SIZE))
+        last_rect = pygame.Rect(coordinates, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
 
@@ -71,19 +72,26 @@ class Apple(GameObject):
     """Яблоко"""
 
     def __init__(self):
-        super().__init__(body_color=APPLE_COLOR)
+        super().__init__(
+            body_color=APPLE_COLOR)
+        self.position = self.randomize_position()
 
-    def randomize_position(self, object):
+    def randomize_position(self):
         """Генерация случайной позиции"""
-        for cell in object.positions:
-            if self.position == cell:
-                self.position = (
-                    (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
-                    (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
+        self.position = (
+            (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
+            (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
+        return self.position
+
+    def check_collision(self, occupy_positions):
+        """Проверка на столкновение яблока с занятыми ячейками"""
+        self.randomize_position()
+        if self.position in occupy_positions:
+            self.randomize_position()
 
     def draw(self):
         """Отрисовка яблока"""
-        super().draw(self.position)
+        super().cell(self.position)
 
 
 class Snake(GameObject):
@@ -91,11 +99,8 @@ class Snake(GameObject):
 
     def __init__(self):
         super().__init__(body_color=SNAKE_COLOR)
-        self.length = 1
-        self.positions = [self.position]
-        self.directions = [UP, DOWN, RIGHT, LEFT]
+        self.reset()
         self.direction = RIGHT
-        self.last = None
 
     def update_direction(self, direction):
         """Обновление направления движения"""
@@ -103,22 +108,19 @@ class Snake(GameObject):
 
     def move(self):
         """Движение змейки"""
-        x, y = self.get_head_position()
-        a, b = self.direction
+        x_coordinate, y_coordinate = self.get_head_position()
+        x_direction, y_direction = self.direction
         new_head = (
-            x + a * GRID_SIZE, y + b * GRID_SIZE)
+            x_coordinate + x_direction * GRID_SIZE,
+            y_coordinate + y_direction * GRID_SIZE)
         # столкновение c правым или левым краем
-        if x % SCREEN_WIDTH == 0:
-            if x == SCREEN_WIDTH:
-                new_head = (GRID_SIZE, y)
-            else:
-                new_head = (SCREEN_WIDTH - GRID_SIZE, y)
-        # столкновение c верхним или нижним краем
-        if y % SCREEN_HEIGHT == 0:
-            if y == SCREEN_HEIGHT:
-                new_head = (x, GRID_SIZE)
-            else:
-                new_head = (x, SCREEN_HEIGHT - GRID_SIZE)
+        if x_coordinate > (SCREEN_WIDTH - GRID_SIZE) or x_coordinate < 0:
+            new_head = (x_coordinate % SCREEN_WIDTH,
+                        y_coordinate % SCREEN_HEIGHT)
+        # столкновение с верхним или нижним краем
+        if y_coordinate > (SCREEN_HEIGHT - GRID_SIZE) or y_coordinate < 0:
+            new_head = (x_coordinate % SCREEN_WIDTH,
+                        y_coordinate % SCREEN_HEIGHT)
 
         # добавление новой головы
         self.positions.insert(0, new_head)
@@ -130,8 +132,8 @@ class Snake(GameObject):
 
     def draw(self):
         """Отрисовка змейки"""
-        super().draw(self.get_head_position())
-        if self.last is not None:
+        super().cell(self.get_head_position())
+        if self.last:
             self.erase(self.last)
 
     def get_head_position(self):
@@ -140,11 +142,12 @@ class Snake(GameObject):
 
     def reset(self):
         """Обнуление позиции змейки и её длины"""
-        for pos in self.positions:
-            self.erase(pos)
-        self.direction = choice(self.directions)
         self.length = 1
         self.positions = [self.position]
+        self.directions = [UP, DOWN, RIGHT, LEFT]
+        self.last = self.directions[-1]
+        screen.fill(BOARD_BACKGROUND_COLOR)
+        self.direction = choice(self.directions)
 
 
 def handle_keys(game_object):
@@ -169,7 +172,6 @@ def main():
     # экземпляры классов.
     snake = Snake()
     apple = Apple()
-    apple.randomize_position(snake)
     apple.draw()
     # цикл игры
     while True:
@@ -180,15 +182,18 @@ def main():
         # Столкновение змейки и яблока
         if snake.get_head_position() == apple.position:
             snake.length += 1
-            apple.randomize_position(snake)
+            apple.check_collision(snake.positions)
             apple.draw()
         # Столкновение змейки с собой
-        for pos in snake.positions[1:]:
-            if pos == snake.get_head_position():
-                snake.reset()
-        # Если змейка заняла весь экран
-        if snake.length == ((GRID_WIDTH - 1) * (GRID_HEIGHT - 1)):
+        if snake.get_head_position() in snake.positions[1:]:
             snake.reset()
+            apple.check_collision(snake.positions)
+            apple.draw()
+        # Если змейка заняла весь экран
+        if snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
+            snake.reset()
+            apple.check_collision(snake.positions)
+            apple.draw()
         pygame.display.update()
 
 

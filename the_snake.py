@@ -71,23 +71,17 @@ class GameObject:
 class Apple(GameObject):
     """Яблоко"""
 
-    def __init__(self):
+    def __init__(self, coordinates):
         super().__init__(
             body_color=APPLE_COLOR)
-        self.position = self.randomize_position()
+        self.randomize_position(coordinates)
 
-    def randomize_position(self):
+    def randomize_position(self, occupy_positions):
         """Генерация случайной позиции"""
-        self.position = (
-            (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
-            (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
-        return self.position
-
-    def check_collision(self, occupy_positions):
-        """Проверка на столкновение яблока с занятыми ячейками"""
-        self.randomize_position()
-        if self.position in occupy_positions:
-            self.randomize_position()
+        while self.position in occupy_positions:
+            self.position = (
+                (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
+                (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
 
     def draw(self):
         """Отрисовка яблока"""
@@ -100,7 +94,6 @@ class Snake(GameObject):
     def __init__(self):
         super().__init__(body_color=SNAKE_COLOR)
         self.reset()
-        self.direction = RIGHT
 
     def update_direction(self, direction):
         """Обновление направления движения"""
@@ -113,12 +106,11 @@ class Snake(GameObject):
         new_head = (
             x_coordinate + x_direction * GRID_SIZE,
             y_coordinate + y_direction * GRID_SIZE)
-        # столкновение c правым или левым краем
-        if x_coordinate > (SCREEN_WIDTH - GRID_SIZE) or x_coordinate < 0:
-            new_head = (x_coordinate % SCREEN_WIDTH,
-                        y_coordinate % SCREEN_HEIGHT)
-        # столкновение с верхним или нижним краем
-        if y_coordinate > (SCREEN_HEIGHT - GRID_SIZE) or y_coordinate < 0:
+        # столкновение c краями поля
+        if (
+            x_coordinate > (SCREEN_WIDTH - GRID_SIZE) or x_coordinate < 0) or (
+                y_coordinate > (
+                    SCREEN_HEIGHT - GRID_SIZE) or y_coordinate < 0):
             new_head = (x_coordinate % SCREEN_WIDTH,
                         y_coordinate % SCREEN_HEIGHT)
 
@@ -144,10 +136,9 @@ class Snake(GameObject):
         """Обнуление позиции змейки и её длины"""
         self.length = 1
         self.positions = [self.position]
-        self.directions = [UP, DOWN, RIGHT, LEFT]
-        self.last = self.directions[-1]
+        self.last = self.positions[-1]
+        self.direction = choice([RIGHT, LEFT, UP, DOWN])
         screen.fill(BOARD_BACKGROUND_COLOR)
-        self.direction = choice(self.directions)
 
 
 def handle_keys(game_object):
@@ -171,7 +162,7 @@ def main():
     """Игра"""
     # экземпляры классов.
     snake = Snake()
-    apple = Apple()
+    apple = Apple(snake.positions)
     apple.draw()
     # цикл игры
     while True:
@@ -182,17 +173,13 @@ def main():
         # Столкновение змейки и яблока
         if snake.get_head_position() == apple.position:
             snake.length += 1
-            apple.check_collision(snake.positions)
+            apple.randomize_position(snake.positions)
             apple.draw()
-        # Столкновение змейки с собой
-        if snake.get_head_position() in snake.positions[1:]:
+        # Столкновение змейки с собой или достижение предельной длины
+        if snake.get_head_position() in snake.positions[
+                1:] or snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
             snake.reset()
-            apple.check_collision(snake.positions)
-            apple.draw()
-        # Если змейка заняла весь экран
-        if snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
-            snake.reset()
-            apple.check_collision(snake.positions)
+            apple.randomize_position(snake.positions)
             apple.draw()
         pygame.display.update()
 

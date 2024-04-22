@@ -71,17 +71,21 @@ class GameObject:
 class Apple(GameObject):
     """Яблоко"""
 
-    def __init__(self, coordinates):
+    def __init__(self):
         super().__init__(
             body_color=APPLE_COLOR)
-        self.randomize_position(coordinates)
+        self.randomize_position(self.position)
 
     def randomize_position(self, occupy_positions):
         """Генерация случайной позиции"""
-        while self.position in occupy_positions:
+        while True:
             self.position = (
                 (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
                 (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
+            if self.position in occupy_positions:
+                continue
+            else:
+                break
 
     def draw(self):
         """Отрисовка яблока"""
@@ -162,7 +166,7 @@ def main():
     """Игра"""
     # экземпляры классов.
     snake = Snake()
-    apple = Apple(snake.positions)
+    apple = Apple()
     apple.draw()
     # цикл игры
     while True:

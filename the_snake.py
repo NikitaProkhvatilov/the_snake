@@ -71,21 +71,17 @@ class GameObject:
 class Apple(GameObject):
     """Яблоко"""
 
-    def __init__(self):
-        super().__init__(
-            body_color=APPLE_COLOR)
-        self.randomize_position(self.position)
+    def __init__(self, coordinates=(
+            (SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))):
+        super().__init__(body_color=APPLE_COLOR)
+        self.randomize_position(coordinates)
 
     def randomize_position(self, occupy_positions):
         """Генерация случайной позиции"""
-        while True:
+        while self.position in occupy_positions:
             self.position = (
                 (randint(1, GRID_WIDTH - 1) * GRID_SIZE),
                 (randint(1, GRID_HEIGHT - 1) * GRID_SIZE))
-            if self.position in occupy_positions:
-                continue
-            else:
-                break
 
     def draw(self):
         """Отрисовка яблока"""
@@ -108,16 +104,8 @@ class Snake(GameObject):
         x_coordinate, y_coordinate = self.get_head_position()
         x_direction, y_direction = self.direction
         new_head = (
-            x_coordinate + x_direction * GRID_SIZE,
-            y_coordinate + y_direction * GRID_SIZE)
-        # столкновение c краями поля
-        if (
-            x_coordinate > (SCREEN_WIDTH - GRID_SIZE) or x_coordinate < 0) or (
-                y_coordinate > (
-                    SCREEN_HEIGHT - GRID_SIZE) or y_coordinate < 0):
-            new_head = (x_coordinate % SCREEN_WIDTH,
-                        y_coordinate % SCREEN_HEIGHT)
-
+            (x_coordinate + x_direction * GRID_SIZE) % SCREEN_WIDTH,
+            (y_coordinate + y_direction * GRID_SIZE) % SCREEN_HEIGHT)
         # добавление новой головы
         self.positions.insert(0, new_head)
         # удаление последнего сегмента
@@ -140,7 +128,7 @@ class Snake(GameObject):
         """Обнуление позиции змейки и её длины"""
         self.length = 1
         self.positions = [self.position]
-        self.last = self.positions[-1]
+        self.last = None
         self.direction = choice([RIGHT, LEFT, UP, DOWN])
         screen.fill(BOARD_BACKGROUND_COLOR)
 
@@ -166,7 +154,7 @@ def main():
     """Игра"""
     # экземпляры классов.
     snake = Snake()
-    apple = Apple()
+    apple = Apple(snake.positions)
     apple.draw()
     # цикл игры
     while True:

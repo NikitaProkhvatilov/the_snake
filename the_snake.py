@@ -11,6 +11,9 @@ GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
+# Константа центра экрана
+SCREEN_CENTER = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+
 # Направления движения:
 UP = (0, -1)
 DOWN = (0, 1)
@@ -47,7 +50,7 @@ class GameObject:
     """Базовый класс"""
 
     def __init__(
-            self, position=((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2)),
+            self, position=SCREEN_CENTER,
             body_color=BOARD_BACKGROUND_COLOR):
         self.position = position
         self.body_color = body_color
@@ -71,12 +74,11 @@ class GameObject:
 class Apple(GameObject):
     """Яблоко"""
 
-    def __init__(self, coordinates=(
-            (SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))):
+    def __init__(self):
         super().__init__(body_color=APPLE_COLOR)
-        self.randomize_position(coordinates)
+        self.randomize_position()
 
-    def randomize_position(self, occupy_positions):
+    def randomize_position(self, occupy_positions=[SCREEN_CENTER]):
         """Генерация случайной позиции"""
         while self.position in occupy_positions:
             self.position = (
@@ -154,7 +156,7 @@ def main():
     """Игра"""
     # экземпляры классов.
     snake = Snake()
-    apple = Apple(snake.positions)
+    apple = Apple()
     apple.draw()
     # цикл игры
     while True:
@@ -162,16 +164,23 @@ def main():
         handle_keys(snake)
         snake.draw()
         snake.move()
+        # Достижение змейкой предельной длины
+        if snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
+            snake.reset()
+            apple.draw()
         # Столкновение змейки и яблока
         if snake.get_head_position() == apple.position:
             snake.length += 1
             apple.randomize_position(snake.positions)
             apple.draw()
-        # Столкновение змейки с собой или достижение предельной длины
-        if snake.get_head_position() in snake.positions[
-                1:] or snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
+        # Столкновение змейки с собой
+        if snake.get_head_position() in snake.positions[1:]:
             snake.reset()
-            apple.randomize_position(snake.positions)
+            # формирование списка занятых позиций
+            occupy_positions = []
+            occupy_positions.append(apple.position)
+            occupy_positions.extend(snake.positions)
+            apple.randomize_position(occupy_positions)
             apple.draw()
         pygame.display.update()
 

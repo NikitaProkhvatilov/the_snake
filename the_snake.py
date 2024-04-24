@@ -158,30 +158,33 @@ def main():
     snake = Snake()
     apple = Apple()
     apple.draw()
+
+    def game_restart():
+        """Функция рестарта игры"""
+        snake.reset()
+        # формирование списка занятых позиций
+        occupy_positions = []
+        occupy_positions.append(apple.position)
+        occupy_positions.extend(snake.positions)
+        apple.randomize_position(occupy_positions)
+        apple.draw()
     # цикл игры
     while True:
         clock.tick(SPEED)
         handle_keys(snake)
         snake.draw()
         snake.move()
-        # Достижение змейкой предельной длины
-        if snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
-            snake.reset()
-            apple.draw()
         # Столкновение змейки и яблока
         if snake.get_head_position() == apple.position:
             snake.length += 1
+            # Проверка достижения змейкой предельной длины
+            if snake.length == ((GRID_WIDTH) * (GRID_HEIGHT)):
+                game_restart()
             apple.randomize_position(snake.positions)
             apple.draw()
         # Столкновение змейки с собой
         if snake.get_head_position() in snake.positions[1:]:
-            snake.reset()
-            # формирование списка занятых позиций
-            occupy_positions = []
-            occupy_positions.append(apple.position)
-            occupy_positions.extend(snake.positions)
-            apple.randomize_position(occupy_positions)
-            apple.draw()
+            game_restart()
         pygame.display.update()
 
 
